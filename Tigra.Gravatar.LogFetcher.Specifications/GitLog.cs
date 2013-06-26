@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace Tigra.Gravatar.LogFetcher.Specifications
     {
@@ -29,5 +31,22 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             }
 
         public string GitWorkingCopyPath { get; set; }
+
+        /// <summary>
+        /// Launches a command line process with the command <c>git.exe --pretty=format:"%ae|%an"</c>
+        /// and captures stdout into a StreamReader object.
+        /// </summary>
+        /// <returns>A StreamReader hooked up to the stdout of the git command process.</returns>
+        public StreamReader GetLogStream()
+            {
+            var psi = new ProcessStartInfo("git.exe", "--pretty=format:\"%ae|%an\"");
+            psi.CreateNoWindow = true;
+            psi.RedirectStandardError = true;
+            psi.RedirectStandardOutput = true;
+            psi.UseShellExecute = false;
+            psi.WorkingDirectory = GitWorkingCopyPath;
+            var process = Process.Start(psi);
+            return process.StandardOutput;
+            }
         }
     }

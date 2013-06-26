@@ -6,6 +6,7 @@
 // Last modified: 2013-06-23@22:27 by Tim
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using FakeItEasy;
 using Machine.Specifications;
@@ -96,24 +97,29 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         It should_not_create_the_instance = () => Log.ShouldBeNull();
         }
 
+
     /// <summary>
-    ///   Class FileSystemHelper - a mockable wrapper class that aids testability
+    /// Class when_creating_the_git_log_stream
+    /// This isn't really a proper test, just some code I used to quickly exercise something.
     /// </summary>
-    public class FileSystemHelper
+    [Subject(typeof(GitLog), "git log process")]
+    public class when_creating_the_git_log_stream : with_mock_filesystem
         {
-        public virtual bool DirectoryExists(string path)
-            {
-            return Directory.Exists(path);
-            }
+    //    const string workingCopy = @"C:\Users\Tim\Documents\Visual Studio 2012\Projects\orchard-cms";
 
-        public virtual string PathCombine(string path1, string path2)
-            {
-            return Path.Combine(path1, path2);
-            }
+    //    Because of = () =>
+    //        {
+    //        Log = new GitLog(workingCopy, new FileSystemHelper());
+    //        Debug.WriteLine("Opening git process");
+    //        var stream = Log.GetLogStream();
+    //        Debug.WriteLine("Reading output");
+    //        var output = stream.ReadToEnd();
+    //        Debug.WriteLine("Writing output");
+    //        Debug.WriteLine(output);
+    //        };
 
-        public virtual string GetFullPath(string path)
-            {
-            return Path.GetFullPath(path);
-            }
+    //    It should_create_the_instance = () => Log.ShouldNotBeNull();
+    //    It should_return_the_full_path = () => Log.GitWorkingCopyPath.ShouldEqual(FakeDirectory);
         }
+
     }
