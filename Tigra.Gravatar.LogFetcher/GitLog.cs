@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace Tigra.Gravatar.LogFetcher.Specifications
+namespace Tigra.Gravatar.LogFetcher
     {
     public class GitLog
         {
