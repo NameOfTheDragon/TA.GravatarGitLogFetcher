@@ -3,16 +3,14 @@
 // Copyright © 2013 TiGra Networks, all rights reserved.
 // 
 // File: GravatarFetcher.cs  Created: 2013-06-29@12:13
-// Last modified: 2013-06-30@13:54 by Tim
+// Last modified: 2013-07-07@21:06 by Tim
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tigra.Gravatar.LogFetcher.Specifications
     {
@@ -25,6 +23,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         const string QueryString = "{0}?d=404&size={1}";
         readonly StreamReader reader;
         readonly HttpClient httpClient;
+        FileSystemHelper fileSystem;
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="GravatarFetcher" /> class.
@@ -34,9 +33,14 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         ///   An HttpClient to be used for making web requests (dependency injection).
         ///   If null or omitted, then a new instance is created internally.
         /// </param>
-        public GravatarFetcher(StreamReader reader, HttpClient client = null)
+        /// <param name="filesystem">
+        ///   A <see cref="FileSystemHelper" /> to be used for accessing the file system (dependency injection).
+        ///   If null or omitted, then a new instance is created internally.
+        /// </param>
+        public GravatarFetcher(StreamReader reader, HttpClient client = null, FileSystemHelper filesystem = null)
             {
             this.reader = reader;
+            fileSystem = filesystem ?? new FileSystemHelper();
             httpClient = client ?? new HttpClient();
             httpClient.BaseAddress = new Uri(GravatarBaseUrl);
             UniqueCommitters = new List<Committer>();
@@ -83,9 +87,12 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         /// <exception cref="System.NotImplementedException"></exception>
         async void FetchSingleGravatar(Committer committer, string imagePath)
             {
-            var gravatarId = Committer.GetGravatarMd5Hash(committer.EmailAddress);
-            var result = await httpClient.GetAsync(string.Format(QueryString, gravatarId, 90));
+            string gravatarId = Committer.GetGravatarMd5Hash(committer.EmailAddress);
+            var query = string.Format(QueryString, gravatarId, 90);
+            HttpResponseMessage result = await httpClient.GetAsync(query);
             //ToDo: extract the image bytes and save to a file.
+            var imageStream = await result.Content.ReadAsStreamAsync();
+            var bitmap = new Bitmap(imageStream);
             }
 
         /// <summary>

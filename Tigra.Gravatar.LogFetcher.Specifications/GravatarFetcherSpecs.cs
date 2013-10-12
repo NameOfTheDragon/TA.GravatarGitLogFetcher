@@ -70,28 +70,30 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             {
             MessageHandler = new FakeHttpMessageHandler();
             GravatarClient = new HttpClient(MessageHandler);
-            Fetcher = new GravatarFetcher(Reader, GravatarClient);
+            Filesystem = A.Fake<FileSystemHelper>();
+            Fetcher = new GravatarFetcher(Reader, GravatarClient, Filesystem);
             };
 
         protected static GravatarFetcher Fetcher;
         protected static FakeHttpMessageHandler MessageHandler;
         protected static HttpClient GravatarClient;
+        protected static FileSystemHelper Filesystem;
         }
 
     [Subject(typeof(GravatarFetcher), "Saving to disk")]
-    public class when_fetching_gravatars_for_tim_and_darth : with_fake_log_streamreader
+    public class when_fetching_gravatars_for_tim_and_darth : with_fake_gravatar_web_service
         {
         Establish context = () =>
             {
             Fetcher = new GravatarFetcher(Reader);
-            Filesystem = A.Fake<FileSystemHelper>();
+            //Filesystem = A.Fake<FileSystemHelper>();
             };
         Because of = () => Fetcher.FetchGravatars(@"c:\");
 
         It should_create_gravatar_image_files_correctly =
             () => A.CallTo(() => Filesystem.SavePngImage(null, null)).MustHaveHappened(Repeated.Exactly.Once);
-        static GravatarFetcher Fetcher;
-        static FileSystemHelper Filesystem;
+        //static GravatarFetcher Fetcher;
+        //static FileSystemHelper Filesystem;
         }
 
     public class with_fake_log_streamreader
@@ -112,5 +114,18 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             stream.Seek(0, SeekOrigin.Begin);
             Reader = new StreamReader(stream);
             };
+        }
+
+    [Subject(typeof(GravatarFetcher), "Integration test")]
+    public class when_fetching : with_fake_gravatar_web_service
+        {
+            Establish context = () =>
+            {
+                Fetcher = new GravatarFetcher(Reader, filesystem: Filesystem);  // Use real gravatar web server
+                Fetcher.UniqueCommitters.Clear();
+                Fetcher.UniqueCommitters.Add(new Committer("Tim Long", "Tim@tigranetworks.co.uk"));
+            };
+            Because of = () => Fetcher.FetchGravatars(@"c:\");
+            It should_be_true = () => true.ShouldBeTrue();
         }
     }
