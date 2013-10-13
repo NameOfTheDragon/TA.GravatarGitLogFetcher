@@ -8,6 +8,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using FakeItEasy;
 using Machine.Specifications;
 
@@ -103,23 +104,56 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
     /// This isn't really a proper test, just some code I used to quickly exercise something.
     /// </summary>
     [Subject(typeof(GitLog), "git log process")]
-    public class when_creating_the_git_log_stream : with_mock_filesystem
+    public class when_creating_the_git_log_stream : with_mock_git_log_success_1
         {
-    //    const string workingCopy = @"C:\Users\Tim\Documents\Visual Studio 2012\Projects\orchard-cms";
+            Establish context = () =>
+            {
+                A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.IsEqualTo(FakeDirectory))).Returns(true);
+                A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.EndsWith(".git"))).Returns(true);
+                Log = new GitLog(FakeDirectory, FakeFileSystem);
+            };
 
-    //    Because of = () =>
-    //        {
-    //        Log = new GitLog(workingCopy, new FileSystemHelper());
-    //        Debug.WriteLine("Opening git process");
-    //        var stream = Log.GetLogStream();
-    //        Debug.WriteLine("Reading output");
-    //        var output = stream.ReadToEnd();
-    //        Debug.WriteLine("Writing output");
-    //        Debug.WriteLine(output);
-    //        };
+        Because of = () =>
+            {
+            LogStream = Log.GetLogStream(GitScriptPSI);
+            LogOutput = LogStream.ReadToEnd();
+            Debug.WriteLine(string.Format("Got {0} characters", LogOutput.Length));
+            };
 
-    //    It should_create_the_instance = () => Log.ShouldNotBeNull();
+            It should_create_the_stream = () => LogStream.ShouldNotBeNull();
+
+        It should_return_the_expected_output = () => LogOutput.ShouldEqual("tim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\nfernjampel@hotmail.co.uk|Fern Hughes\r\nTim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\n");
+        static StreamReader LogStream;
+        static string LogOutput;
+
+        //    It should_create_the_instance = () => Log.ShouldNotBeNull();
     //    It should_return_the_full_path = () => Log.GitWorkingCopyPath.ShouldEqual(FakeDirectory);
         }
 
+    /// <summary>
+    /// Class with_mock_git_log_success_1.
+    /// Provides a process that returns fake output as if from Git.
+    /// Actually uses a simple VBScript that just writes static text to stdout.
+    /// </summary>
+    public class with_mock_git_log_success_1 : with_mock_filesystem
+        {
+        const string MockGitScript = "MockGit.vbs";
+        const string argumentsFormat = "\"{0}\" //NoLogo //T:5";
+        protected static ProcessStartInfo GitScriptPSI;
+        Establish context = () =>
+            {
+            var me = Assembly.GetExecutingAssembly();
+            var myExecutable = me.Location;
+            var myWorkingDirectory = Path.GetDirectoryName(myExecutable);
+            var fullPathToGitScript = Path.Combine(myWorkingDirectory, MockGitScript);
+            var arguments = string.Format(argumentsFormat, fullPathToGitScript);
+            GitScriptPSI = new ProcessStartInfo("cscript.exe", arguments);
+            GitScriptPSI.WorkingDirectory = myWorkingDirectory;
+            };
+
+        Cleanup after = () =>
+            {
+            GitScriptPSI = null;
+            };
+        }
     }
