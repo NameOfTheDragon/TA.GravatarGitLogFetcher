@@ -91,7 +91,7 @@ namespace Tigra.Gravatar.LogFetcher
                     var logLine = logStream.ReadLine();
                     Diagnostics.TraceVerbose("Read from log stream => {0}", logLine);
                     var parts = logLine.Split('|');
-                    if (parts.Length != 2)
+                    if (parts.Length != 2)  // Must hav
                         continue;
                     if (string.IsNullOrEmpty(parts[0])) // Must have a non-blank email address
                         continue;

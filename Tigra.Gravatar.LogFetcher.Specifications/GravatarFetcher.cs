@@ -47,6 +47,8 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             ParseCommitLog();
             }
 
+
+        // ToDo: duplicate functionality, this is implemented in GitLog, so this one can be removed now.
         void ParseCommitLog()
             {
             UniqueCommitters = new List<Committer>();

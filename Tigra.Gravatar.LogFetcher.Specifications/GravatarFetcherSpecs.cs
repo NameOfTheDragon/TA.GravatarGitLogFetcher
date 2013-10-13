@@ -28,6 +28,7 @@ using Machine.Specifications;
 
 namespace Tigra.Gravatar.LogFetcher.Specifications
     {
+    [Ignore("Uses async/await which upsets MSpec runner - needs a test sync context.")]
     [Subject(typeof(GravatarFetcher), "Unique Committers")]
     public class when_creating_a_new_gravatar_fetcher : with_fake_log_streamreader
         {
@@ -38,6 +39,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         static GravatarFetcher Fetcher;
         }
 
+    [Ignore("Uses async/await which upsets MSpec runner - needs a test sync context.")]
     [Subject(typeof(GravatarFetcher), "Web service")]
     public class when_fetching_imagaes_from_gravatar_web_service : with_fake_gravatar_web_service
         {
