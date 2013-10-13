@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -75,6 +76,15 @@ namespace Tigra.Gravatar.LogFetcher
             psi.UseShellExecute = false;
             var process = Process.Start(psi);
             return process.StandardOutput;
+            }
+
+        public IEnumerable<Committer> GetListOfUniqueCommitters(ProcessStartInfo gitPsi)
+            {
+            return new List<Committer>()
+                {
+                new Committer(string.Empty, string.Empty),
+                new Committer(string.Empty, string.Empty)
+                };
             }
         }
     }

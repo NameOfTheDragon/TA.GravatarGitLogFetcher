@@ -1,0 +1,8 @@
+WScript.Echo "tim@tigranetworks.co.uk|Tim Long"
+WScript.Echo "Tim@tigranetworks.co.uk|Tim Long"
+WScript.Echo "Tim@tigranetworks.co.uk|Tim Long"
+WScript.Echo "Tim@tigranetworks.co.uk|Tim Long"
+WScript.Echo "Tim@tigranetworks.co.uk|Tim Long"
+WScript.Echo "fernjampel@hotmail.co.uk|Fern Hughes"
+WScript.Echo "Tim@tigranetworks.co.uk|Tim Long"
+WScript.Echo "Tim@tigranetworks.co.uk|Tim Long"
