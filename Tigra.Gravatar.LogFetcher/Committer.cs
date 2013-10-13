@@ -3,7 +3,7 @@
 // Copyright © 2013 TiGra Networks, all rights reserved.
 // 
 // File: Committer.cs  Created: 2013-06-29@12:12
-// Last modified: 2013-07-07@19:30 by Tim
+// Last modified: 2013-10-13@20:38 by Tim
 
 using System;
 using System.Security.Cryptography;
@@ -14,7 +14,7 @@ namespace Tigra.Gravatar.LogFetcher
     /// <summary>
     ///   Class Committer - represents a person who appears in a Git repository commit log.
     /// </summary>
-    public class Committer
+    public class Committer : IComparable<Committer>
         {
         public string Name { get; private set; }
         public string EmailAddress { get; private set; }
@@ -30,6 +30,26 @@ namespace Tigra.Gravatar.LogFetcher
             EmailAddress = emailAddress;
             }
 
+        /// <summary>
+        ///   Compares the current object with another object of the same type.
+        /// </summary>
+        /// <param name="other">An object to compare with this object.</param>
+        /// <returns>
+        ///   A value that indicates the relative order of the objects being compared.
+        ///   The return value has the following meanings:
+        ///   Value Meaning Less than zero This object is less than the <paramref name="other" /> parameter.
+        ///   Zero This object is equal to <paramref name="other" />.
+        ///   Greater than zero This object is greater than <paramref name="other" />.
+        /// </returns>
+        /// <remarks>
+        ///   Only the <see cref="EmailAddress" /> property is considered. The comparison is performed in
+        ///   the current culture and ignores case.
+        /// </remarks>
+        public int CompareTo(Committer other)
+            {
+            return string.Compare(EmailAddress, other.EmailAddress, StringComparison.CurrentCultureIgnoreCase);
+            }
+
         public override string ToString()
             {
             return string.Format("{0} <{1}>", Name, EmailAddress);
@@ -42,10 +62,8 @@ namespace Tigra.Gravatar.LogFetcher
         ///   <list type="number">
         ///     <item>The other object is a reference to the same object in memory (ReferenceEquals)</item>
         ///     <item>
-        ///       The other object is a Committer and the <see cref="Name" /> properties are equal
-        ///     </item>
-        ///     <item>
-        ///       The other object is a committer and the <see cref="EmailAddress" /> properties are equal
+        ///       The other object is a committer and the <see cref="EmailAddress" /> properties are equal.
+        ///       Comparisons are performed using the current culture and are not case sensitive.
         ///     </item>
         ///     <item>
         ///       The other object is a string and it matches the <see cref="Name" /> property
@@ -73,16 +91,16 @@ namespace Tigra.Gravatar.LogFetcher
                 var other = obj as Committer;
                 if (Name == other.Name)
                     return true;
-                if (EmailAddress == other.EmailAddress)
+                if (string.Equals(EmailAddress, other.EmailAddress, StringComparison.CurrentCultureIgnoreCase))
                     return true;
                 }
 
             if (obj is string)
                 {
                 var other = obj as string;
-                if (Name == other)
+                if (string.Equals(Name, other, StringComparison.CurrentCultureIgnoreCase))
                     return true;
-                if (EmailAddress == other)
+                if (string.Equals(EmailAddress, other, StringComparison.CurrentCultureIgnoreCase))
                     return true;
                 if (ToString() == other)
                     return true;
@@ -103,12 +121,12 @@ namespace Tigra.Gravatar.LogFetcher
         /// <exception cref="ArgumentException">Thrown if the email address is null or empty.</exception>
         public static string GetGravatarMd5Hash(string email)
             {
-                if (string.IsNullOrEmpty(email))
-                    throw new ArgumentException("You must supply a valid email address");
+            if (string.IsNullOrEmpty(email))
+                throw new ArgumentException("You must supply a valid email address");
             var md5 = new MD5CryptoServiceProvider();
             var encoder = new UTF8Encoding();
             var md5Hasher = new MD5CryptoServiceProvider();
-            var stringToHash = email.Trim().ToLower();
+            string stringToHash = email.Trim().ToLower();
             byte[] hashedBytes = md5Hasher.ComputeHash(encoder.GetBytes(stringToHash));
 
             var sb = new StringBuilder(hashedBytes.Length*2);

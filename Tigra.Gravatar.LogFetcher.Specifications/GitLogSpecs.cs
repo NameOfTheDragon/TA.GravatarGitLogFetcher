@@ -150,8 +150,8 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             };
 
         It should_contain_two_entries = () => Committers.Count().ShouldEqual(2);
-        It should_contain_tim_long;
-        It should_contain_fern_hughes;
+        It should_contain_tim_long = () => Committers.Count(p => p.Name == "Tim Long").ShouldEqual(1);
+        It should_contain_fern_hughes = () => Committers.Count(p => p.Name == "Fern Hughes").ShouldEqual(1);
 
         static StreamReader LogStream;
         static string LogOutput;

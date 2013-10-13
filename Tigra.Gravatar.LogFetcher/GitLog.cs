@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using TiGra;
 
 namespace Tigra.Gravatar.LogFetcher
     {
@@ -80,11 +81,33 @@ namespace Tigra.Gravatar.LogFetcher
 
         public IEnumerable<Committer> GetListOfUniqueCommitters(ProcessStartInfo gitPsi)
             {
-            return new List<Committer>()
+            var logStream = GetLogStream(gitPsi);
+            var uniqueCommitters = new SortedSet<Committer>();
+            var committersAdded = 0;
+            while (!logStream.EndOfStream)
                 {
-                new Committer(string.Empty, string.Empty),
-                new Committer(string.Empty, string.Empty)
-                };
+                try
+                    {
+                    var logLine = logStream.ReadLine();
+                    Diagnostics.TraceVerbose("Read from log stream => {0}", logLine);
+                    var parts = logLine.Split('|');
+                    if (parts.Length != 2)
+                        continue;
+                    if (string.IsNullOrEmpty(parts[0])) // Must have a non-blank email address
+                        continue;
+                    var committer = new Committer(parts[1], parts[0]);
+                    var added = uniqueCommitters.Add(committer);
+                    Diagnostics.TraceVerbose("Committer={0}, Added={1}", committer,added);
+                    if (added)
+                        ++committersAdded;
+                    }
+                catch (Exception ex)
+                    {
+                    Diagnostics.TraceError(ex);
+                    }
+                }
+            Diagnostics.TraceVerbose("Added a total of {0} committers", committersAdded);
+            return uniqueCommitters;
             }
         }
     }
