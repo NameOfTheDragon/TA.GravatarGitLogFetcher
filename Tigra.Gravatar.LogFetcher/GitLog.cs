@@ -47,7 +47,7 @@ namespace Tigra.Gravatar.LogFetcher
         /// If null is passed, then "git.exe" is used by default.
         /// </param>
         /// <returns>A StreamReader hooked up to the stdout of the git command process.</returns>
-        public StreamReader GetLogStream(ProcessStartInfo psi)
+        public StreamReader GetLogStream(ProcessStartInfo psi = null)
             {
             /*
              * ToDo: By experimentation, use this command: git log --pretty=format:"%ae|%an"
@@ -79,7 +79,7 @@ namespace Tigra.Gravatar.LogFetcher
             return process.StandardOutput;
             }
 
-        public IEnumerable<Committer> GetListOfUniqueCommitters(ProcessStartInfo gitPsi)
+        public IEnumerable<Committer> GetListOfUniqueCommitters(ProcessStartInfo gitPsi = null)
             {
             var logStream = GetLogStream(gitPsi);
             var uniqueCommitters = new SortedSet<Committer>();

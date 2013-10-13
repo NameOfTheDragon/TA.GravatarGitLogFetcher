@@ -21,21 +21,26 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using FakeItEasy;
 using Machine.Specifications;
 
 namespace Tigra.Gravatar.LogFetcher.Specifications
     {
-    [Ignore("Uses async/await which upsets MSpec runner - needs a test sync context.")]
     [Subject(typeof(GravatarFetcher), "Unique Committers")]
-    public class when_creating_a_new_gravatar_fetcher : with_fake_log_streamreader
+    public class when_creating_a_new_gravatar_fetcher : with_fake_committer_list
         {
-        Because of = () => { Fetcher = new GravatarFetcher(Reader); };
+        Because of = () => { Fetcher = new GravatarFetcher(Committers); };
         It should_have_2_unique_committers = () => Fetcher.UniqueCommitterCount.ShouldEqual(2);
-        It should_have_first_committer_tim_long = () => Fetcher.UniqueCommitters[0].Name.ShouldEqual("Tim Long");
-        It should_have_second_committer_darth_vader = () => Fetcher.UniqueCommitters[1].Name.ShouldEqual("Darth Vader");
+
+        It should_have_first_committer_tim_long =
+            () => Fetcher.UniqueCommitters.Count(p => p.Name == "Tim Long").ShouldEqual(1);
+
+        It should_have_second_committer_darth_vader =
+            () => Fetcher.UniqueCommitters.Count(p => p.Name == "Darth Vader").ShouldEqual(1);
         static GravatarFetcher Fetcher;
         }
 
@@ -43,12 +48,6 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
     [Subject(typeof(GravatarFetcher), "Web service")]
     public class when_fetching_imagaes_from_gravatar_web_service : with_fake_gravatar_web_service
         {
-        Establish context = () =>
-            {
-            Fetcher.UniqueCommitters.Clear();
-            Fetcher.UniqueCommitters.Add(new Committer("Tim Long", "Tim@tigranetworks.co.uk"));
-            };
-
         Because of = () =>
             {
             Fetcher.FetchGravatars(@"c:\");
@@ -66,14 +65,14 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         static string UriPath;
         }
 
-    public class with_fake_gravatar_web_service : with_fake_log_streamreader
+    public class with_fake_gravatar_web_service : with_fake_committer_list
         {
         Establish context = () =>
             {
             MessageHandler = new FakeHttpMessageHandler();
             GravatarClient = new HttpClient(MessageHandler);
             Filesystem = A.Fake<FileSystemHelper>();
-            Fetcher = new GravatarFetcher(Reader, GravatarClient, Filesystem);
+            Fetcher = new GravatarFetcher(Committers, GravatarClient, Filesystem);
             };
 
         protected static GravatarFetcher Fetcher;
@@ -87,7 +86,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         {
         Establish context = () =>
             {
-            Fetcher = new GravatarFetcher(Reader);
+            Fetcher = new GravatarFetcher(Committers);
             //Filesystem = A.Fake<FileSystemHelper>();
             };
         Because of = () => Fetcher.FetchGravatars(@"c:\");
@@ -98,23 +97,17 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         //static FileSystemHelper Filesystem;
         }
 
-    public class with_fake_log_streamreader
+    public class with_fake_committer_list
         {
-        protected static StreamReader Reader;
+        protected static IEnumerable<Committer> Committers;
 
         Establish context = () =>
             {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.WriteLine("Tim Long|Tim@tigranetworks.co.uk");
-            writer.WriteLine("Tim Long|Tim@tigranetworks.co.uk");
-            writer.WriteLine("Tim Long|Tim@tigranetworks.co.uk");
-            writer.WriteLine("Darth Vader|Darth@deathstar.com"); // Darth has no gravatar
-            writer.WriteLine("Darth Vader|Darth@deathstar.com");
-            writer.WriteLine("Tim Long|Tim@tigranetworks.co.uk");
-            writer.Flush();
-            stream.Seek(0, SeekOrigin.Begin);
-            Reader = new StreamReader(stream);
+            Committers = new SortedSet<Committer>
+                {
+                new Committer("Tim Long", "Tim@tigranetworks.co.uk"),
+                new Committer("Darth Vader", "Darth@deathstar.space"), // Darth has no gravatar
+                };
             };
         }
 
@@ -123,9 +116,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         {
             Establish context = () =>
             {
-                Fetcher = new GravatarFetcher(Reader, filesystem: Filesystem);  // Use real gravatar web server
-                Fetcher.UniqueCommitters.Clear();
-                Fetcher.UniqueCommitters.Add(new Committer("Tim Long", "Tim@tigranetworks.co.uk"));
+                Fetcher = new GravatarFetcher(Committers, filesystem: Filesystem);  // Use real gravatar web server
             };
             Because of = () => Fetcher.FetchGravatars(@"c:\");
             It should_be_true = () => true.ShouldBeTrue();
