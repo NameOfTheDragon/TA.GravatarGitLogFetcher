@@ -16,12 +16,12 @@ namespace Tigra.Gravatar.LogFetcher
         ///   Initializes a new instance of the <see cref="GitLog" /> class.
         /// </summary>
         /// <param name="pathToWorkingCopy">The path to a Git working copy.</param>
-        /// <param name="fileSystem">A helper class that provides file system services (optional).</param>
+        /// <param name="fileSystemHelper">A helper class that provides file system services (optional).</param>
         /// <exception cref="ArgumentException">Thrown if the path is invalid.</exception>
         /// <exception cref="InvalidOperationException">Thrown if there is no Git repository at the specified path.</exception>
-        public GitLog(string pathToWorkingCopy, FileSystemHelper fileSystem = null)
+        public GitLog(string pathToWorkingCopy, FileSystemHelper fileSystemHelper = null)
             {
-            this.fileSystem = fileSystem ?? new FileSystemHelper();
+            this.fileSystem = fileSystemHelper ?? new FileSystemHelper();
             string fullPath = fileSystem.GetFullPath(pathToWorkingCopy); // ArgumentException if path invalid.
             if (!fileSystem.DirectoryExists(fullPath))
                 throw new ArgumentException("The specified working copy directory does not exist.");
