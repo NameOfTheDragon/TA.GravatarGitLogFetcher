@@ -12,7 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 
-namespace Tigra.Gravatar.LogFetcher.Specifications
+namespace Tigra.Gravatar.LogFetcher
     {
     /// <summary>
     ///   Class GravatarFetcher - fetches Gravatar images from the Gravatar web service
@@ -51,8 +51,6 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             UniqueCommitters = committers;
             }
 
-        // ToDo: duplicate functionality, this is implemented in GitLog, so this one can be removed now.
-
         /// <summary>
         ///   Fetches the gravatar image for each person in the UniqueCommitters collection and saves to the specified path.
         ///   Images will be in PNG format and will be named as the person's full name.
@@ -71,7 +69,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         /// <param name="committer">The committer.</param>
         /// <param name="imagePath">The image path.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        async void FetchSingleGravatar(Committer committer, string imagePath)
+        internal async void FetchSingleGravatar(Committer committer, string imagePath)
             {
             string gravatarId = Committer.GetGravatarMd5Hash(committer.EmailAddress);
             string query = string.Format(QueryString, gravatarId, 90);

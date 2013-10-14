@@ -106,7 +106,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
     /// This isn't really a proper test, just some code I used to quickly exercise something.
     /// </summary>
     [Subject(typeof(GitLog), "git log process")]
-    public class when_creating_the_git_log_stream : with_mock_git_log_success_1
+    public class when_creating_the_git_log_stream : with_mock_git_process
         {
         Establish context = () =>
             {
@@ -134,7 +134,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         }
 
     [Subject(typeof(GitLog), "get committer list")]
-    public class when_getting_the_list_of_unique_committers : with_mock_git_log_success_1
+    public class when_getting_the_list_of_unique_committers : with_mock_git_process
         {
             Establish context = () =>
             {
@@ -159,11 +159,11 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         }
 
     /// <summary>
-    /// Class with_mock_git_log_success_1.
+    /// Class with_mock_git_process.
     /// Provides a process that returns fake output as if from Git.
     /// Actually uses a simple VBScript that just writes static text to stdout.
     /// </summary>
-    public class with_mock_git_log_success_1 : with_mock_filesystem
+    public class with_mock_git_process : with_mock_filesystem
         {
         const string MockGitScript = "MockGit.vbs";
         const string argumentsFormat = "\"{0}\" //NoLogo //T:5";
