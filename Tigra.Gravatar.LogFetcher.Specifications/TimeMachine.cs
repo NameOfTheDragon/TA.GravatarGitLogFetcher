@@ -95,7 +95,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             public void AdvanceTo(int targetTime)
                 {
                 if (targetTime <= time)
-                    throw new ArgumentOutOfRangeException("targetTime", "Can only advance time forwards");
+                    throw new ArgumentOutOfRangeException("targetTime", "Can only advance time forwards. Travelling backwards in time could create a time paradox!");
                 var timesToRemove = new List<int>();
                 foreach (var entry in actions.TakeWhile(e => e.Key <= targetTime))
                     {

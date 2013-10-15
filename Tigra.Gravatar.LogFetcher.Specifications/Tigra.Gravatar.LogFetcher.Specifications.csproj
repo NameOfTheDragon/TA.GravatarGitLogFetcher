@@ -54,10 +54,15 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="TiGra.Diagnostics, Version=1.1.57.0, Culture=neutral, PublicKeyToken=e329dfcaa9921b48, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\TiGra.Diagnostics.1.1.57\lib\net45\TiGra.Diagnostics.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommitterSpecs.cs" />
     <Compile Include="FakeHttpMessageHandler.cs" />
+    <Compile Include="FakeHttpStreamContent.cs" />
     <Compile Include="GitLogSpecs.cs" />
     <Compile Include="GravatarFetcherSpecs.cs" />
     <Compile Include="ManuallyPumpedSynchronizationContext.cs" />

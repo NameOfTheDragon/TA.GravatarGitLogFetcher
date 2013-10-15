@@ -117,19 +117,28 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
 
         Establish context = () =>
             {
-            GitCommitter = new Committer("Tim Long", "Tim@tigranetworks.co.uk");
-            // Make sure filesystem operations always succeed
+            // Mock the filesystem
             A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.IsEqualTo(RuntimeEnvironment.OutputDirectory)))
                 .Returns(true);
             A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.EndsWith(".git"))).Returns(true);
 
+            // Prepare a stream to read from a bitmap image, we use a previously saved Gravatar icon on disk
+            //var gravatarStream = new FileStream(RuntimeEnvironment.GravatarFileTimLong, FileMode.Open);
+
+            // Create the time machine and schedule future async results.
+            // Time T=1, HttpClient.GetAsync succeeds, with an HttpResponseMessage result.
+            // Time T=2, ReadAsStreamAsync succeeds, with a Stream result containing the gravatar bitmap.
             Tardis = new TimeMachine();
             GravatarSuccess = Tardis.ScheduleSuccess<HttpResponseMessage>(1, FakeHttpResponse.GravatarForTimLong200());
+            //BitmapStreamSuccess = Tardis.ScheduleSuccess<Stream>(2, gravatarStream);
+            // Create WebAPI client and inject a testable message handler and fake response content
             FakeMessageHandler = new TimeMachineMessageHandler(GravatarSuccess);
             ReplayWebClient = new HttpClient(FakeMessageHandler);
-            //ToDo: prime the FakeFileSystem?
-            var committers = new List<Committer> {GitCommitter};
-            GravatarClient = new GravatarFetcher(committers, ReplayWebClient, FakeFileSystem);
+
+            // Create the Subject Unter Test and inject mocks
+            GitCommitter = new Committer("Tim Long", "Tim@tigranetworks.co.uk");
+            var fakeCommitters = new List<Committer> {GitCommitter};
+            GravatarClient = new GravatarFetcher(fakeCommitters, ReplayWebClient, FakeFileSystem);
             };
 
         Because of = () => Tardis.ExecuteInContext(advancer =>
@@ -137,6 +146,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             GravatarClient.FetchSingleGravatar(GitCommitter,
                 Path.Combine(RuntimeEnvironment.OutputDirectory, RuntimeEnvironment.fileTimLong));
             advancer.Advance(); // Runs the Http request/response pipeline
+            //advancer.Advance(); // Streams the result into a bitmap object
             });
 
         It should_have_run_the_async_web_request_to_completion =
@@ -175,15 +185,17 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         static Committer GitCommitter;
         static Task<HttpResponseMessage> GravatarSuccess;
         static TimeMachineMessageHandler FakeMessageHandler;
+        static Task<Stream> BitmapStreamSuccess;
         }
 
     internal static class FakeHttpResponse
         {
         internal static HttpResponseMessage GravatarForTimLong200()
             {
-            var gravatarStream = new FileStream(RuntimeEnvironment.GravatarFileTimLong, FileMode.Open);
+            //var gravatarStream = new FileStream(RuntimeEnvironment.GravatarFileTimLong, FileMode.Open);
             // Response headers pasted from Fiddler2
-            var response = new HttpResponseMessage(HttpStatusCode.OK) {Content = new StreamContent(gravatarStream)};
+            var fakeContent = new FakeHttpStreamContent(RuntimeEnvironment.GravatarFileTimLong);
+            var response = new HttpResponseMessage(HttpStatusCode.OK) {Content = fakeContent};
             response.Headers.Add("Accept-Ranges", "bytes");
             response.Headers.Add("Access-Control-Allow-Origin", "*");
             response.Headers.Add("Cache-Control", "max-age=300");
