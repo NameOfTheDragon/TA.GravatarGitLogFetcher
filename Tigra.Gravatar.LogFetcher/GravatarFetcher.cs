@@ -20,7 +20,7 @@ namespace Tigra.Gravatar.LogFetcher
     public class GravatarFetcher
         {
         const string GravatarBaseUrl = "http://www.gravatar.com/avatar/";
-        const string QueryString = "{0}?d=404&size={1}";
+        const string QueryString = "{0}.png?default=404&size={1}&rating=g";
         readonly StreamReader reader;
         readonly HttpClient httpClient;
         FileSystemHelper fileSystem;

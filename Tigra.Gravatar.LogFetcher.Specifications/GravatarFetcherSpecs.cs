@@ -3,22 +3,7 @@
 // Copyright © 2013 TiGra Networks, all rights reserved.
 // 
 // File: GravatarFetcherSpecs.cs  Created: 2013-06-26@17:28
-// Last modified: 2013-06-26@18:02 by Tim
-
-/*
- * GravatarFetcher should behave as follows:
- * 
- * When created with a valid Git log file,
- *  It should produce the set of unique committers in the log
- *  It should return the count of unique committers.
- *  
- * Given a correctly constructed GravatarFetcher,
- * When passed a directory path for saving images,
- * Then (for each committer, in parallel)
- *  It should connect to the Gravatar server and retrieve that user's image in PNG format
- *  It should save the image under the user's full name, in the format 'user name.png'.
- *  It should attempt to fetch the same number of images as there are unique committers.
- */
+// Last modified: 2013-10-15@13:14 by Tim
 
 using System;
 using System.Collections.Generic;
@@ -27,9 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using FakeItEasy;
 using Machine.Specifications;
@@ -120,13 +103,21 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             };
         }
 
-    // FetchSingleGravatar
-
-    [Subject(typeof(GravatarFetcher), "Web request")]
+    /// <summary>
+    ///   SUT: GravatarFetcher.FetchSingleGravatar
+    ///   This method exercises the following behaviours:
+    ///   Calculating the Gravatar hash; Constructing the URL and making a web request; Receiving the result asynchronously.
+    ///   Because of the asynchronicity, a more complicated test is required that allows us to marshall the asynchronous
+    ///   code. We've employed Jon Skeet's 'time machine' technique.
+    /// </summary>
+    [Subject(typeof(GravatarFetcher), "FetchSingleGravatar happy path")]
     public class when_fetching_a_single_gravatar_and_the_gravatar_exists : with_mock_filesystem
         {
+        const string expectedHash = "df0478426c0e47cc5e557d5391e5255d";
+
         Establish context = () =>
             {
+            GitCommitter = new Committer("Tim Long", "Tim@tigranetworks.co.uk");
             // Make sure filesystem operations always succeed
             A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.IsEqualTo(RuntimeEnvironment.OutputDirectory)))
                 .Returns(true);
@@ -134,8 +125,8 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
 
             Tardis = new TimeMachine();
             GravatarSuccess = Tardis.ScheduleSuccess<HttpResponseMessage>(1, FakeHttpResponse.GravatarForTimLong200());
-            ReplayWebClient = new HttpClient(new TimeMachineMessageHandler(GravatarSuccess));
-            GitCommitter = new Committer("Tim Long", "Tim@tigranetworks.co.uk");
+            FakeMessageHandler = new TimeMachineMessageHandler(GravatarSuccess);
+            ReplayWebClient = new HttpClient(FakeMessageHandler);
             //ToDo: prime the FakeFileSystem?
             var committers = new List<Committer> {GitCommitter};
             GravatarClient = new GravatarFetcher(committers, ReplayWebClient, FakeFileSystem);
@@ -148,20 +139,42 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             advancer.Advance(); // Runs the Http request/response pipeline
             });
 
-        It should_have_completed_async_operations = () => GravatarSuccess.Status.ShouldEqual(TaskStatus.RanToCompletion);
+        It should_have_run_the_async_web_request_to_completion =
+            () => GravatarSuccess.Status.ShouldEqual(TaskStatus.RanToCompletion);
 
-        It should_have_saved_the_image =
-            () =>
-                A.CallTo(() => FakeFileSystem.SavePngImage(A<string>.Ignored, A<Bitmap>.Ignored)).MustHaveHappened(Repeated.Exactly.Once);
-        It should_send_web_request_to_gravatar;
-        It should_request_the_hash_code_for_tim_long;
-        It should_write_the_image_to_the_correct_file;
-         
+        It should_send_a_web_request_to_gravatar =
+            () => FakeMessageHandler.RequestMessage.RequestUri.Host.ShouldEqual("www.gravatar.com");
+
+        It should_use_the_http_get_method = () => FakeMessageHandler.RequestMessage.Method.ShouldEqual(HttpMethod.Get);
+
+        It should_request_the_expected_url_and_gravatar_hash =
+            () => FakeMessageHandler.RequestMessage.RequestUri.PathAndQuery.ShouldStartWith("/avatar/" + expectedHash);
+
+        It should_request_a_portable_network_graphic = () => 
+            FakeMessageHandler.RequestMessage.RequestUri.PathAndQuery.ShouldContain(".png");
+
+        It should_request_image_size_90_pixels =
+            () => FakeMessageHandler.RequestMessage.RequestUri.Query.ShouldContain("size=90");
+
+        It should_request_a_g_rated_image =
+            () => FakeMessageHandler.RequestMessage.RequestUri.Query.ShouldContain("rating=g");
+
+        It should_request_a_http404_response_if_no_gravatar_exists =
+            () => FakeMessageHandler.RequestMessage.RequestUri.Query.ShouldContain("default=404");
+
+        It should_write_the_image_to_the_correct_file = () =>
+            A.CallTo(() => FakeFileSystem.SavePngImage(
+                A<string>.That.Matches(s => s == RuntimeEnvironment.GravatarFileTimLong),
+                A<Bitmap>.Ignored)
+                )
+                .MustHaveHappened(Repeated.Exactly.Once);
+
         static TimeMachine Tardis;
         static HttpClient ReplayWebClient;
         static GravatarFetcher GravatarClient;
         static Committer GitCommitter;
         static Task<HttpResponseMessage> GravatarSuccess;
+        static TimeMachineMessageHandler FakeMessageHandler;
         }
 
     internal static class FakeHttpResponse
@@ -187,13 +200,13 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             //response.Headers.Add("Expires", "Mon, 14 Oct 2013 03:51:44 GMT");
             //response.Headers.Add("Last-Modified", "Tue, 16 Apr 2013 22:31:07 GMT");
             //response.Headers.Add("Content-Length", "2990");
-            
+
             return response;
             }
         }
 
     /// <summary>
-    /// Class RuntimeEnvironment. Provides information about the execution environment.
+    ///   Class RuntimeEnvironment. Provides information about the execution environment.
     /// </summary>
     internal static class RuntimeEnvironment
         {
@@ -205,10 +218,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         internal static string GravatarDirectory { get; private set; }
         internal static string OutputDirectory { get; private set; }
 
-        internal static string GravatarFileTimLong
-            {
-            get { return Path.Combine(GravatarDirectory, fileTimLong); }
-            }
+        internal static string GravatarFileTimLong { get { return Path.Combine(GravatarDirectory, fileTimLong); } }
 
         static RuntimeEnvironment()
             {
@@ -218,7 +228,5 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             GravatarDirectory = Path.Combine(AssemblyDirectory, "Gravatars");
             OutputDirectory = Path.Combine(AssemblyDirectory, "Output");
             }
-
         }
-
     }
