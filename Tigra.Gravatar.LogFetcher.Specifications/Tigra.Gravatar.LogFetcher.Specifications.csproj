@@ -66,6 +66,9 @@
     <Compile Include="TimeMachine.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Gravatars\df0478426c0e47cc5e557d5391e5255d.jpeg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="MockGit.vbs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

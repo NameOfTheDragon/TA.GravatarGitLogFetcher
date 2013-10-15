@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -126,18 +127,32 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         {
         Establish context = () =>
             {
+            // Make sure filesystem operations always succeed
+            A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.IsEqualTo(RuntimeEnvironment.OutputDirectory)))
+                .Returns(true);
+            A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.EndsWith(".git"))).Returns(true);
+
             Tardis = new TimeMachine();
-            var gravatarSuccess = Tardis.ScheduleSuccess<HttpResponseMessage>(1,FakeHttpResponse.GravatarForTimLong200());
-            ReplayWebClient = new HttpClient(new TimeMachineMessageHandler(gravatarSuccess));
+            GravatarSuccess = Tardis.ScheduleSuccess<HttpResponseMessage>(1, FakeHttpResponse.GravatarForTimLong200());
+            ReplayWebClient = new HttpClient(new TimeMachineMessageHandler(GravatarSuccess));
             GitCommitter = new Committer("Tim Long", "Tim@tigranetworks.co.uk");
             //ToDo: prime the FakeFileSystem?
             var committers = new List<Committer> {GitCommitter};
             GravatarClient = new GravatarFetcher(committers, ReplayWebClient, FakeFileSystem);
             };
 
-        Because of = () => GravatarClient.FetchSingleGravatar(GitCommitter,
-            Path.Combine(RuntimeEnvironment.OutputDirectory, RuntimeEnvironment.fileTimLong));
+        Because of = () => Tardis.ExecuteInContext(advancer =>
+            {
+            GravatarClient.FetchSingleGravatar(GitCommitter,
+                Path.Combine(RuntimeEnvironment.OutputDirectory, RuntimeEnvironment.fileTimLong));
+            advancer.Advance(); // Runs the Http request/response pipeline
+            });
 
+        It should_have_completed_async_operations = () => GravatarSuccess.Status.ShouldEqual(TaskStatus.RanToCompletion);
+
+        It should_have_saved_the_image =
+            () =>
+                A.CallTo(() => FakeFileSystem.SavePngImage(A<string>.Ignored, A<Bitmap>.Ignored)).MustHaveHappened(Repeated.Exactly.Once);
         It should_send_web_request_to_gravatar;
         It should_request_the_hash_code_for_tim_long;
         It should_write_the_image_to_the_correct_file;
@@ -146,6 +161,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         static HttpClient ReplayWebClient;
         static GravatarFetcher GravatarClient;
         static Committer GitCommitter;
+        static Task<HttpResponseMessage> GravatarSuccess;
         }
 
     internal static class FakeHttpResponse
@@ -158,16 +174,18 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             response.Headers.Add("Accept-Ranges", "bytes");
             response.Headers.Add("Access-Control-Allow-Origin", "*");
             response.Headers.Add("Cache-Control", "max-age=300");
-            response.Headers.Add("Content-Disposition", "inline; filename=\"df0478426c0e47cc5e557d5391e5255d.jpeg\"");
-            response.Headers.Add("Content-Type", "image/jpeg");
             response.Headers.Add("Date", "Mon, 14 Oct 2013 03:46:44 GMT");
-            response.Headers.Add("Expires", "Mon, 14 Oct 2013 03:51:44 GMT");
-            response.Headers.Add("Last-Modified", "Tue, 16 Apr 2013 22:31:07 GMT");
             response.Headers.Add("Server", "ECS (lhr/4BFE)");
             response.Headers.Add("Source-Age", "0");
             response.Headers.Add("Via", "1.1 varnish");
             response.Headers.Add("X-Cache", "HIT");
             response.Headers.Add("X-Varnish", "3901214514 3901214096");
+
+            // Even though Fiddler shows these headers in the response packet, ASP Web API will not allow them...
+            //response.Headers.Add("Content-Disposition", "inline; filename=\"df0478426c0e47cc5e557d5391e5255d.jpeg\"");
+            //response.Headers.Add("Content-Type", "image/jpeg");
+            //response.Headers.Add("Expires", "Mon, 14 Oct 2013 03:51:44 GMT");
+            //response.Headers.Add("Last-Modified", "Tue, 16 Apr 2013 22:31:07 GMT");
             //response.Headers.Add("Content-Length", "2990");
             
             return response;
