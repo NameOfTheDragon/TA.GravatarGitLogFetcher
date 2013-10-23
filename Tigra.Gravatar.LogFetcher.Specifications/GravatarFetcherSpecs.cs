@@ -60,14 +60,14 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         {
         Establish context = () =>
             {
-            MessageHandler = new FakeHttpMessageHandler(new HttpResponseMessage(HttpStatusCode.OK));
+            MessageHandler = new LoggingHttpMessageHandler(new HttpResponseMessage(HttpStatusCode.OK));
             GravatarClient = new HttpClient(MessageHandler);
             Filesystem = A.Fake<FakeFileSystemWrapper>();
             Fetcher = new GravatarFetcher(Committers, GravatarClient, Filesystem);
             };
 
         protected static GravatarFetcher Fetcher;
-        protected static FakeHttpMessageHandler MessageHandler;
+        protected static LoggingHttpMessageHandler MessageHandler;
         protected static HttpClient GravatarClient;
         protected static FakeFileSystemWrapper Filesystem;
         }
