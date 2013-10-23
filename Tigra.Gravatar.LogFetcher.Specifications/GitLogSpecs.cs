@@ -48,15 +48,15 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             {
             Log = null;
             Thrown = null;
-            var fileSystem = new FileSystemHelper();
-            FakeFileSystem = A.Fake<FileSystemHelper>(x => x.Wrapping(fileSystem));
+            var fileSystem = new FakeFileSystemWrapper();
+            FakeFileSystem = A.Fake<FakeFileSystemWrapper>(x => x.Wrapping(fileSystem));
             //A.CallTo(() => FakeFileSystem.GetFullPath(A<string>.Ignored)).Returns(FakeDirectory);
             };
 
         protected const string FakeDirectory = @"C:\Fakedirectory";
         protected static GitLog Log;
         protected static Exception Thrown;
-        protected static FileSystemHelper FakeFileSystem;
+        protected static FakeFileSystemWrapper FakeFileSystem;
         }
 
     [Subject(typeof(GitLog), "Path to repository")]
@@ -93,7 +93,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         Because of = () =>
                      Thrown =
                      Catch.Exception(
-                         () => Log = new GitLog(new string(Path.GetInvalidPathChars()), new FileSystemHelper()));
+                         () => Log = new GitLog(new string(Path.GetInvalidPathChars()), new FakeFileSystemWrapper()));
 
         It should_throw = () => Thrown.ShouldBeOfType<ArgumentException>();
         It should_have_expected_error_message = () => Thrown.Message.ShouldStartWith("Illegal characters");

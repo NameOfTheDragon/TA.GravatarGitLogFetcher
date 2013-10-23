@@ -17,9 +17,12 @@ namespace Tigra.Gravatar.LogFetcher
              * 4. Download the Gravatar icon for each committer. [Parallel/Async]
              * 5. Save the image with the correct file name
              */
-
-            
-
+            var options = new Options();
+            var result = CommandLine.Parser.Default.ParseArguments(args, options);
+            var log = new GitLog(options.Repository);
+            var committers = log.GetListOfUniqueCommitters();
+            var fetcher = new GravatarFetcher(committers);
+            fetcher.FetchGravatars(options.OutputDirectory);
         }
     }
 }

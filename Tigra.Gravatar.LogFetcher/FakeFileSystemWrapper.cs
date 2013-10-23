@@ -2,7 +2,7 @@
 // 
 // Copyright © 2013 TiGra Networks, all rights reserved.
 // 
-// File: FileSystemHelper.cs  Created: 2013-06-29@12:09
+// File: FakeFileSystemWrapper.cs  Created: 2013-06-29@12:09
 // Last modified: 2013-07-07@17:56 by Tim
 
 using System;
@@ -15,10 +15,10 @@ using System.IO;
 namespace Tigra.Gravatar.LogFetcher
     {
     /// <summary>
-    ///   Class FileSystemHelper - an abstraction over file system services.
+    ///   Class FakeFileSystemWrapper - an abstraction over file system services.
     ///   This class consists mainly of virtual methods and exists primarily to aid testability.
     /// </summary>
-    public class FileSystemHelper
+    public class FakeFileSystemWrapper
         {
         /// <summary>
         ///   Determines whether the specified path exists as a directory in the file system.
@@ -52,7 +52,7 @@ namespace Tigra.Gravatar.LogFetcher
             return Path.GetFullPath(path);
             }
 
-        public virtual void SavePngImage(string path, Bitmap  image)
+        public virtual void SaveImage(string path, Bitmap image, ImageFormat format)
             {
             image.Save(path, ImageFormat.Png);
             }

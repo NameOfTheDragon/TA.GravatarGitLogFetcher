@@ -10,18 +10,18 @@ namespace Tigra.Gravatar.LogFetcher
     public class GitLog
         {
         const string GitLogCommitterRegex = @"^(?<email>[^|]+)\|(?<name>.*)$";
-        FileSystemHelper fileSystem;
+        FakeFileSystemWrapper fileSystem;
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="GitLog" /> class.
         /// </summary>
         /// <param name="pathToWorkingCopy">The path to a Git working copy.</param>
-        /// <param name="fileSystemHelper">A helper class that provides file system services (optional).</param>
+        /// <param name="fakeFileSystemWrapper">A helper class that provides file system services (optional).</param>
         /// <exception cref="ArgumentException">Thrown if the path is invalid.</exception>
         /// <exception cref="InvalidOperationException">Thrown if there is no Git repository at the specified path.</exception>
-        public GitLog(string pathToWorkingCopy, FileSystemHelper fileSystemHelper = null)
+        public GitLog(string pathToWorkingCopy, FakeFileSystemWrapper fakeFileSystemWrapper = null)
             {
-            this.fileSystem = fileSystemHelper ?? new FileSystemHelper();
+            this.fileSystem = fakeFileSystemWrapper ?? new FakeFileSystemWrapper();
             string fullPath = fileSystem.GetFullPath(pathToWorkingCopy); // ArgumentException if path invalid.
             if (!fileSystem.DirectoryExists(fullPath))
                 throw new ArgumentException("The specified working copy directory does not exist.");

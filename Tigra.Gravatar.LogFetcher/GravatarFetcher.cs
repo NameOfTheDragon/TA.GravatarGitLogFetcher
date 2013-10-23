@@ -8,9 +8,11 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Tigra.Gravatar.LogFetcher
     {
@@ -23,7 +25,7 @@ namespace Tigra.Gravatar.LogFetcher
         const string QueryString = "{0}.png?default=404&size={1}&rating=g";
         readonly StreamReader reader;
         readonly HttpClient httpClient;
-        FileSystemHelper fileSystem;
+        FakeFileSystemWrapper fileSystem;
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="GravatarFetcher" /> class.
@@ -38,14 +40,14 @@ namespace Tigra.Gravatar.LogFetcher
         ///   If null or omitted, then a new instance is created internally.
         /// </param>
         /// <param name="filesystem">
-        ///   A <see cref="FileSystemHelper" /> to be used for accessing the file system (dependency injection).
+        ///   A <see cref="FakeFileSystemWrapper" /> to be used for accessing the file system (dependency injection).
         ///   If null or omitted, then a new instance is created internally.
         /// </param>
         public GravatarFetcher(IEnumerable<Committer> committers,
             HttpClient client = null,
-            FileSystemHelper filesystem = null)
+            FakeFileSystemWrapper filesystem = null)
             {
-            fileSystem = filesystem ?? new FileSystemHelper();
+            fileSystem = filesystem ?? new FakeFileSystemWrapper();
             httpClient = client ?? new HttpClient();
             httpClient.BaseAddress = new Uri(GravatarBaseUrl);
             UniqueCommitters = committers;
@@ -56,11 +58,27 @@ namespace Tigra.Gravatar.LogFetcher
         ///   Images will be in PNG format and will be named as the person's full name.
         /// </summary>
         /// <param name="saveTo">The path to save the images to.</param>
-        public void FetchGravatars(string saveTo)
+        public void FetchGravatarsOld(string saveTo)
             {
             string imagePath = Path.GetFullPath(saveTo); // Throws if the path is invalid.
+            //var pendingTasks = new List<>
             foreach (Committer committer in UniqueCommitters)
+                {
                 FetchSingleGravatar(committer, imagePath);
+                }
+            }
+
+        public async Task<Task> FetchGravatars(string saveTo)
+            {
+                string imagePath = Path.GetFullPath(saveTo); // Throws if the path is invalid.
+                var pendingTasks = new List<Task>();
+                foreach (Committer committer in UniqueCommitters)
+                {
+                    var task = FetchSingleGravatar(committer, imagePath);
+                    pendingTasks.Add(task);
+                }
+            var result =  Task.WhenAll(pendingTasks);
+            return result;
             }
 
         /// <summary>
@@ -69,7 +87,7 @@ namespace Tigra.Gravatar.LogFetcher
         /// <param name="committer">The committer.</param>
         /// <param name="imagePath">The image path.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        internal async void FetchSingleGravatar(Committer committer, string imagePath)
+        internal async Task FetchSingleGravatar(Committer committer, string imagePath)
             {
             string gravatarId = Committer.GetGravatarMd5Hash(committer.EmailAddress);
             string query = string.Format(QueryString, gravatarId, 90);
@@ -77,6 +95,8 @@ namespace Tigra.Gravatar.LogFetcher
             //ToDo: extract the image bytes and save to a file.
             Stream imageStream = await result.Content.ReadAsStreamAsync();
             var bitmap = new Bitmap(imageStream);
+            var fileToSave = Path.Combine(imagePath, gravatarId, ".png");
+            fileSystem.SaveImage(fileToSave, bitmap, ImageFormat.Png);
             }
 
         /// <summary>
