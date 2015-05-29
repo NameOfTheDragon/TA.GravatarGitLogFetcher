@@ -22,7 +22,10 @@ namespace Tigra.Gravatar.LogFetcher
             var log = new GitLog(options.Repository);
             var committers = log.GetListOfUniqueCommitters();
             var fetcher = new GravatarFetcher(committers);
-            fetcher.FetchGravatars(options.OutputDirectory);
+            var taskGroup = fetcher.FetchGravatars(options.OutputDirectory);
+            Task.WaitAll(taskGroup);
+            Console.WriteLine("Finished... press ENTER");
+            Console.ReadLine();
         }
     }
 }

@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using TiGra;
 
 namespace Tigra.Gravatar.LogFetcher
     {
@@ -58,10 +59,9 @@ namespace Tigra.Gravatar.LogFetcher
         ///   Images will be in PNG format and will be named as the person's full name.
         /// </summary>
         /// <param name="saveTo">The path to save the images to.</param>
-        public void FetchGravatarsOld(string saveTo)
+        public void FetchGravatarsSynchronously(string saveTo)
             {
             string imagePath = Path.GetFullPath(saveTo); // Throws if the path is invalid.
-            //var pendingTasks = new List<>
             foreach (Committer committer in UniqueCommitters)
                 {
                 FetchSingleGravatar(committer, imagePath);
@@ -86,6 +86,7 @@ namespace Tigra.Gravatar.LogFetcher
         /// </summary>
         /// <param name="committer">The committer.</param>
         /// <param name="imagePath">The image path.</param>
+        /// <param name="fileFormat"></param>
         /// <exception cref="System.NotImplementedException"></exception>
         internal async Task FetchSingleGravatar(Committer committer, string imagePath)
             {
@@ -95,8 +96,11 @@ namespace Tigra.Gravatar.LogFetcher
             //ToDo: extract the image bytes and save to a file.
             Stream imageStream = await result.Content.ReadAsStreamAsync();
             var bitmap = new Bitmap(imageStream);
-            var fileToSave = Path.Combine(imagePath, gravatarId, ".png");
+            var filename = gravatarId + ".png";
+            var fileToSave = Path.Combine(imagePath, filename);
             fileSystem.SaveImage(fileToSave, bitmap, ImageFormat.Png);
+            Diagnostics.TraceInfo("Saved {0} => {1}", committer, filename);
+            Console.WriteLine("Saved {0} => {1}", committer, filename);
             }
 
         /// <summary>
