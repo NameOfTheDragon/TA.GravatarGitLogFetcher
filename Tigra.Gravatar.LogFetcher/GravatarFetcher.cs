@@ -96,7 +96,7 @@ namespace Tigra.Gravatar.LogFetcher
             //ToDo: extract the image bytes and save to a file.
             Stream imageStream = await result.Content.ReadAsStreamAsync();
             var bitmap = new Bitmap(imageStream);
-            var filename = gravatarId + ".png";
+            var filename = committer.Name + ".png";
             var fileToSave = Path.Combine(imagePath, filename);
             fileSystem.SaveImage(fileToSave, bitmap, ImageFormat.Png);
             Diagnostics.TraceInfo("Saved {0} => {1}", committer, filename);
