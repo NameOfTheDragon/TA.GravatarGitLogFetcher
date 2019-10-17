@@ -4,15 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C9067B51-E0A1-46AE-A248-5E3FDBB16CE8}</ProjectGuid>
+    <ProjectGuid>{900A8674-4445-4B03-ACD9-06612944F7C7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Tigra.Gravatar.LogFetcher.Specifications</RootNamespace>
-    <AssemblyName>Tigra.Gravatar.LogFetcher.Specifications</AssemblyName>
+    <RootNamespace>Tigra.Gravatar.LogFetcher.IntegrationTests</RootNamespace>
+    <AssemblyName>Tigra.Gravatar.LogFetcher.IntegrationTests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,10 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FakeItEasy, Version=1.25.2.0, Culture=neutral, PublicKeyToken=eff28e2146d5fd2c, processorArchitecture=MSIL">
-      <HintPath>..\packages\FakeItEasy.1.25.2\lib\net40\FakeItEasy.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Machine.Specifications, Version=0.9.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Machine.Specifications.0.9.1\lib\net45\Machine.Specifications.dll</HintPath>
       <Private>True</Private>
@@ -66,9 +61,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -76,27 +68,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommitterSpecs.cs" />
-    <Compile Include="LoggingHttpMessageHandler.cs" />
-    <Compile Include="GitLogSpecs.cs" />
-    <Compile Include="GravatarFetcherSpecs.cs" />
-    <Compile Include="ManuallyPumpedSynchronizationContext.cs" />
+    <Compile Include="GitLogTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TimeMachineMessageHandler.cs" />
-    <Compile Include="TimeMachine.cs" />
+    <Content Include="TestContent\CSharpClass.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestContent\TextFile1.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Gravatars\df0478426c0e47cc5e557d5391e5255d.jpeg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="MockGit.vbs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ReadMe.txt" />
+    <None Include="CreateGitRepository.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Tigra.Gravatar.LogFetcher\Tigra.Gravatar.LogFetcher.csproj">
-      <Project>{84fe9b30-b27b-41fd-bb90-20ea1e616a48}</Project>
+      <Project>{84FE9B30-B27B-41FD-BB90-20EA1E616A48}</Project>
       <Name>Tigra.Gravatar.LogFetcher</Name>
     </ProjectReference>
   </ItemGroup>
@@ -105,6 +93,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <PropertyGroup>
+    <PostBuildEvent>cd "$(OutDir)"
+CreateGitRepository.bat
+</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

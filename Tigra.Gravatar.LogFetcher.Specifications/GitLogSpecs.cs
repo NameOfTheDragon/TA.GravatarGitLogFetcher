@@ -6,7 +6,11 @@
 // Last modified: 2013-06-23@22:27 by Tim
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using FakeItEasy;
 using Machine.Specifications;
 
@@ -44,15 +48,15 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             {
             Log = null;
             Thrown = null;
-            var fileSystem = new FileSystemHelper();
-            FakeFileSystem = A.Fake<FileSystemHelper>(x => x.Wrapping(fileSystem));
+            var fileSystem = new FakeFileSystemWrapper();
+            FakeFileSystem = A.Fake<FakeFileSystemWrapper>(x => x.Wrapping(fileSystem));
             //A.CallTo(() => FakeFileSystem.GetFullPath(A<string>.Ignored)).Returns(FakeDirectory);
             };
 
         protected const string FakeDirectory = @"C:\Fakedirectory";
         protected static GitLog Log;
         protected static Exception Thrown;
-        protected static FileSystemHelper FakeFileSystem;
+        protected static FakeFileSystemWrapper FakeFileSystem;
         }
 
     [Subject(typeof(GitLog), "Path to repository")]
@@ -89,31 +93,95 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         Because of = () =>
                      Thrown =
                      Catch.Exception(
-                         () => Log = new GitLog(new string(Path.GetInvalidPathChars()), new FileSystemHelper()));
+                         () => Log = new GitLog(new string(Path.GetInvalidPathChars()), new FakeFileSystemWrapper()));
 
         It should_throw = () => Thrown.ShouldBeOfType<ArgumentException>();
         It should_have_expected_error_message = () => Thrown.Message.ShouldStartWith("Illegal characters");
         It should_not_create_the_instance = () => Log.ShouldBeNull();
         }
 
+
     /// <summary>
-    ///   Class FileSystemHelper - a mockable wrapper class that aids testability
+    /// Class when_creating_the_git_log_stream
+    /// This isn't really a proper test, just some code I used to quickly exercise something.
     /// </summary>
-    public class FileSystemHelper
+    [Subject(typeof(GitLog), "git log process")]
+    public class when_creating_the_git_log_stream : with_mock_git_process
         {
-        public virtual bool DirectoryExists(string path)
+        Establish context = () =>
             {
-            return Directory.Exists(path);
-            }
+            A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.IsEqualTo(FakeDirectory))).Returns(true);
+            A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.EndsWith(".git"))).Returns(true);
+            Log = new GitLog(FakeDirectory, FakeFileSystem);
+            };
 
-        public virtual string PathCombine(string path1, string path2)
+        Because of = () =>
             {
-            return Path.Combine(path1, path2);
-            }
+            LogStream = Log.GetLogStream(GitScriptPSI);
+            LogOutput = LogStream.ReadToEnd();
+            Debug.WriteLine(string.Format("Got {0} characters", LogOutput.Length));
+            };
 
-        public virtual string GetFullPath(string path)
+        It should_create_the_stream = () => LogStream.ShouldNotBeNull();
+
+        It should_return_the_expected_output =
+            () =>
+                LogOutput.ShouldEqual(
+                    "tim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\nfernjampel@hotmail.co.uk|Fern Hughes\r\nTim@tigranetworks.co.uk|Tim Long\r\nTim@tigranetworks.co.uk|Tim Long\r\n");
+
+        static StreamReader LogStream;
+        static string LogOutput;
+        }
+
+    [Subject(typeof(GitLog), "get committer list")]
+    public class when_getting_the_list_of_unique_committers : with_mock_git_process
+        {
+            Establish context = () =>
             {
-            return Path.GetFullPath(path);
-            }
+                A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.IsEqualTo(FakeDirectory))).Returns(true);
+                A.CallTo(() => FakeFileSystem.DirectoryExists(A<string>.That.EndsWith(".git"))).Returns(true);
+                Log = new GitLog(FakeDirectory, FakeFileSystem);
+            };
+
+        Because of = () =>
+            {
+            Committers = Log.GetListOfUniqueCommitters(GitScriptPSI);
+            Debug.WriteLine(string.Format("Got {0} unique committers", Committers.Count()));
+            };
+
+        It should_contain_two_entries = () => Committers.Count().ShouldEqual(2);
+        It should_contain_tim_long = () => Committers.Count(p => p.Name == "Tim Long").ShouldEqual(1);
+        It should_contain_fern_hughes = () => Committers.Count(p => p.Name == "Fern Hughes").ShouldEqual(1);
+
+        static StreamReader LogStream;
+        static string LogOutput;
+        static IEnumerable<Committer> Committers;
+        }
+
+    /// <summary>
+    /// Class with_mock_git_process.
+    /// Provides a process that returns fake output as if from Git.
+    /// Actually uses a simple VBScript that just writes static text to stdout.
+    /// </summary>
+    public class with_mock_git_process : with_mock_filesystem
+        {
+        const string MockGitScript = "MockGit.vbs";
+        const string argumentsFormat = "\"{0}\" //NoLogo //T:5";
+        protected static ProcessStartInfo GitScriptPSI;
+        Establish context = () =>
+            {
+            var me = Assembly.GetExecutingAssembly();
+            var myExecutable = me.Location;
+            var myWorkingDirectory = Path.GetDirectoryName(myExecutable);
+            var fullPathToGitScript = Path.Combine(myWorkingDirectory, MockGitScript);
+            var arguments = string.Format(argumentsFormat, fullPathToGitScript);
+            GitScriptPSI = new ProcessStartInfo("cscript.exe", arguments);
+            GitScriptPSI.WorkingDirectory = myWorkingDirectory;
+            };
+
+        Cleanup after = () =>
+            {
+            GitScriptPSI = null;
+            };
         }
     }
