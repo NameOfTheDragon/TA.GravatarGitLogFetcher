@@ -2,6 +2,11 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/packages
+packages/
 [Bb]in/
 [Oo]bj/
+_ReSharper.Caches
+**/*.user
+**/*.user.*
+_NCrunch_*/
+.vs/

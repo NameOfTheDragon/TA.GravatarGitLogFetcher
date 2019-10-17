@@ -1,15 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29311.281
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tigra.Gravatar.LogFetcher", "Tigra.Gravatar.LogFetcher\Tigra.Gravatar.LogFetcher.csproj", "{84FE9B30-B27B-41FD-BB90-20EA1E616A48}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tigra.Gravatar.LogFetcher.Specifications", "Tigra.Gravatar.LogFetcher.Specifications\Tigra.Gravatar.LogFetcher.Specifications.csproj", "{C9067B51-E0A1-46AE-A248-5E3FDBB16CE8}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{71F9F680-E1C7-4805-BB45-A1C38B650C78}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tigra.Gravatar.LogFetcher.IntegrationTests", "Tigra.Gravatar.LogFetcher.IntegrationTests\Tigra.Gravatar.LogFetcher.IntegrationTests.csproj", "{900A8674-4445-4B03-ACD9-06612944F7C7}"
 EndProject
@@ -34,5 +30,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6594DB0D-942F-45F5-9F6A-93EB716355A6}
 	EndGlobalSection
 EndGlobal
