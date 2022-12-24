@@ -65,32 +65,32 @@ namespace Tigra.Gravatar.LogFetcher
         public IEnumerable<Committer> UniqueCommitters { get; internal set; }
 
         public Task FetchGravatars(string saveTo, IList<string> errorsOut)
-        {
+            {
             var imagePath = Path.GetFullPath(saveTo); // Throws if the path is invalid.
             var pendingTasks = new List<Task>();
             foreach (var committer in UniqueCommitters)
-            {
+                {
                 var task = FetchSingleGravatar(committer, imagePath);
                 pendingTasks.Add(task);
-            }
+                }
             try
-            {
+                {
                 return Task.WhenAll(pendingTasks);
-            }
+                }
             catch (AggregateException ae)
-            {
+                {
                 errorsOut.Add("Fetching Gravatar images resulted in multiple errors as follows:");
                 foreach (var exception in ae.InnerExceptions)
-                {
+                    {
                     errorsOut.Add(exception.Message);
+                    }
                 }
-            }
             catch (Exception ex)
-            {
+                {
                 errorsOut.Add($"Unhandled exception: {ex.Message}");
-            }
+                }
             return Task.Delay(0);
-        }
+            }
 
         /// <summary>
         ///     Fetches the gravatar image for each person in the UniqueCommitters collection and saves to the specified path.
@@ -102,7 +102,7 @@ namespace Tigra.Gravatar.LogFetcher
             var imagePath = Path.GetFullPath(saveTo); // Throws if the path is invalid.
             foreach (var committer in UniqueCommitters)
             {
-                var taskNotAwaited = FetchSingleGravatar(committer, imagePath);
+                FetchSingleGravatarSynchronously(committer, imagePath);
             }
         }
 
@@ -114,7 +114,7 @@ namespace Tigra.Gravatar.LogFetcher
         /// <param name="fileFormat"></param>
         /// <exception cref="System.NotImplementedException"></exception>
         internal async Task FetchSingleGravatar(Committer committer, string imagePath)
-        {
+            {
             var gravatarId = Committer.GetGravatarMd5Hash(committer.EmailAddress);
             var query = string.Format(QueryString, gravatarId, 90);
             var result = await httpClient.GetAsync(query);
@@ -125,18 +125,43 @@ namespace Tigra.Gravatar.LogFetcher
                 .Write();
 
             if (result.IsSuccessStatusCode)
-            {
+                {
                 var imageStream = await result.Content.ReadAsStreamAsync();
                 var bitmap = new Bitmap(imageStream);
                 var filename = committer.Name + ".png";
                 var fileToSave = Path.Combine(imagePath, filename);
                 fileSystem.SaveImage(fileToSave, bitmap, ImageFormat.Png);
                 Log.Info().Message("Saved {committer} => {filename}", committer, filename).Write();
-            }
+                }
             else
-            {
+                {
                 Log.Info().Message("Unable to retrieve Gravatar for {committer}", committer).Write();
+                }
+            }
+        internal void FetchSingleGravatarSynchronously(Committer committer, string imagePath)
+            {
+            var gravatarId = Committer.GetGravatarMd5Hash(committer.EmailAddress);
+            var query = string.Format(QueryString, gravatarId, 90);
+            var result = httpClient.GetAsync(query).Result;
+            Log.Debug()
+                .Message("HTTP Status {status} retrieving image for committer {committer}",
+                    result.StatusCode,
+                    committer)
+                .Write();
+
+            if (result.IsSuccessStatusCode)
+                {
+                var imageStream = result.Content.ReadAsStreamAsync().Result;
+                var bitmap = new Bitmap(imageStream);
+                var filename = committer.Name + ".png";
+                var fileToSave = Path.Combine(imagePath, filename);
+                fileSystem.SaveImage(fileToSave, bitmap, ImageFormat.Png);
+                Log.Info().Message("Saved {committer} => {filename}", committer, filename).Write();
+                }
+            else
+                {
+                Log.Info().Message("Unable to retrieve Gravatar for {committer}", committer).Write();
+                }
             }
         }
     }
-}

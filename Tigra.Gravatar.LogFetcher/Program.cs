@@ -75,8 +75,10 @@ namespace Tigra.Gravatar.LogFetcher
                 var log = new GitLog(options.Repository);
                 var committers = log.GetListOfUniqueCommitters();
                 var fetcher = new GravatarFetcher(committers);
-                await fetcher.FetchGravatars(options.OutputDirectory, errorsOut);
+                //await fetcher.FetchGravatars(options.OutputDirectory, errorsOut);
+                fetcher.FetchGravatarsSynchronously(options.OutputDirectory);
                 Log.Info().Message("Task complete.").Write();
+                await Task.Delay(1); // fudge
                 return SignalSuccess;
             }
             catch (Exception ex)

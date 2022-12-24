@@ -40,7 +40,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
         {
         Because of = () =>
             {
-            Fetcher.FetchGravatars(@"c:\").Wait(5000);
+            Fetcher.FetchGravatars(@"c:\",new List<string>()).Wait(5000);
             //"http://www.gravatar.com/avatar/".md5_hex(lc $email)."?d=404&size=".$size; 
             UriPath = MessageHandler.RequestMessage.RequestUri.GetComponents(UriComponents.Path, UriFormat.Unescaped);
             };
@@ -81,7 +81,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
             //Filesystem = A.Fake<FakeFileSystemWrapper>();
             };
 
-        Because of = () => Fetcher.FetchGravatars(@"c:\");
+        Because of = () => Fetcher.FetchGravatars(@"c:\", new List<string>());
 
         It should_create_gravatar_image_files_correctly;
         //=() => A.CallTo(() => Filesystem.SaveImage(null, null)).MustHaveHappened(Repeated.Exactly.Once);

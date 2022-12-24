@@ -70,7 +70,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
 
         Because of = () => Thrown = Catch.Exception(() => Log = new GitLog(FakeDirectory, FakeFileSystem));
         It should_not_create_the_instance = () => Log.ShouldBeNull();
-        It should_throw = () => Thrown.ShouldBeOfType<ArgumentException>();
+        It should_throw = () => Thrown.ShouldBeOfExactType<ArgumentException>();
         }
 
     [Subject(typeof(GitLog), "Path to repository")]
@@ -84,7 +84,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
 
         Because of = () => Thrown = Catch.Exception(() => Log = new GitLog(FakeDirectory, FakeFileSystem));
         It should_not_create_the_instance = () => Log.ShouldBeNull();
-        It should_throw = () => Thrown.ShouldBeOfType<InvalidOperationException>();
+        It should_throw = () => Thrown.ShouldBeOfExactType<InvalidOperationException>();
         }
 
     [Subject(typeof(GitLog), "Path to repository")]
@@ -95,7 +95,7 @@ namespace Tigra.Gravatar.LogFetcher.Specifications
                      Catch.Exception(
                          () => Log = new GitLog(new string(Path.GetInvalidPathChars()), new FakeFileSystemWrapper()));
 
-        It should_throw = () => Thrown.ShouldBeOfType<ArgumentException>();
+        It should_throw = () => Thrown.ShouldBeOfExactType<ArgumentException>();
         It should_have_expected_error_message = () => Thrown.Message.ShouldStartWith("Illegal characters");
         It should_not_create_the_instance = () => Log.ShouldBeNull();
         }
